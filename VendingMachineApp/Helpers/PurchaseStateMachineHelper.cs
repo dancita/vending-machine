@@ -1,4 +1,6 @@
-﻿namespace VendingMachineApp.Helpers
+﻿using VendingMachineApp.Enums;
+
+namespace VendingMachineApp.Helpers
 {
     public static class PurchaseStateMachineHelper
     {
@@ -17,6 +19,13 @@
             { "9", 100 },
             { "10", 50 },
             { "11", 65 }
+        };
+
+        public static readonly Dictionary<(VendingMachineState, VendingMachineTrigger), VendingMachineState> StateTransitions = new()
+        {
+            { (VendingMachineState.WaitingForPayment, VendingMachineTrigger.PressButton), VendingMachineState.ButtonIsPressed },
+            { (VendingMachineState.ButtonIsPressed, VendingMachineTrigger.AttemptWithInsufficientFunds), VendingMachineState.WaitingForPayment },
+            { (VendingMachineState.ButtonIsPressed, VendingMachineTrigger.AttemptWithEnoughFunds), VendingMachineState.WaitingForPayment },
         };
     }
 }

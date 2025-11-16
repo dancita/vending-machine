@@ -5,8 +5,6 @@ namespace VendingMachineApp
 {
     public class PurchaseStateMachine
     {
-        private readonly Dictionary<(VendingMachineState, VendingMachineTrigger), VendingMachineState> stateTransitions;
-
         public VendingMachineState CurrentState { get; private set; }
 
         public decimal CurrentAmount { get; private set; }
@@ -24,17 +22,11 @@ namespace VendingMachineApp
         {
             CurrentState = VendingMachineState.WaitingForPayment;
             CurrentDisplay = _purchaseStartedText;
-            stateTransitions = new Dictionary<(VendingMachineState, VendingMachineTrigger), VendingMachineState>
-            {
-                { (VendingMachineState.WaitingForPayment, VendingMachineTrigger.PressButton), VendingMachineState.ButtonIsPressed },
-                { (VendingMachineState.ButtonIsPressed, VendingMachineTrigger.AttemptWithInsufficientFunds), VendingMachineState.WaitingForPayment },
-                { (VendingMachineState.ButtonIsPressed, VendingMachineTrigger.AttemptWithEnoughFunds), VendingMachineState.WaitingForPayment },             
-            };
         }
 
         public void ProcessTransition(VendingMachineTrigger trigger)
         {
-            if (stateTransitions.TryGetValue((CurrentState, trigger), out VendingMachineState newState)) {
+            if (PurchaseStateMachineHelper.StateTransitions.TryGetValue((CurrentState, trigger), out VendingMachineState newState)) {
                 CurrentState = newState;
             }
             else
@@ -46,7 +38,7 @@ namespace VendingMachineApp
         public void PressButton(string productCode)
         {
             ProcessTransition(VendingMachineTrigger.PressButton);
-            int productPrice = GetValueByKey(productCode, PurchaseStateMachineHelper.PriceList);
+            var productPrice = GetValueByKey(productCode, PurchaseStateMachineHelper.PriceList);
 
             if (CurrentAmount < productPrice)
             {
@@ -66,19 +58,9 @@ namespace VendingMachineApp
             }
         }
 
-        private static int GetValueByKey(string key, Dictionary<string, int> dictionary)
-        {
-            return dictionary[key];
-        }
-
-        private void ResetCurrentAmount()
-        {
-            CurrentAmount = 0;
-        }
-
         public void AddCoins(string coinKey)
         {
-            int coinValue = GetValueByKey(coinKey, PurchaseStateMachineHelper.CoinList);
+            var coinValue = GetValueByKey(coinKey, PurchaseStateMachineHelper.CoinList);
 
             CurrentAmount += coinValue;
 
@@ -95,13 +77,30 @@ namespace VendingMachineApp
             {
                 CurrentDisplay = $"{_amountDisplayText} {ConvertAmountToPounds(CurrentAmount)}";
             }
+
             return CurrentDisplay;
+        }
+
+        public void TakeCoinsFromReturn()
+        {
+            CoinsToReturn = 0;
         }
 
         private static string ConvertAmountToPounds(decimal currentAmount)
         {
             var helper = currentAmount / 100m;
+
             return helper.ToString("C");
+        }
+
+        private static int GetValueByKey(string key, Dictionary<string, int> dictionary)
+        {
+            return dictionary[key];
+        }
+
+        private void ResetCurrentAmount()
+        {
+            CurrentAmount = 0;
         }
     }
 }
